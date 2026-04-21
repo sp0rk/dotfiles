@@ -8,6 +8,13 @@ fi
 # Pre-zshrc (device-specific)
 [[ -f ~/.config/zsh/pre.local.zsh ]] && source ~/.config/zsh/pre.local.zsh
 
+# Local secrets
+if [[ -f ~/.config/zsh/secrets.local ]]; then
+  set -a
+  source ~/.config/zsh/secrets.local
+  set +a
+fi
+
 export PATH="$HOME/bin:$HOME/.local/bin:$PATH"
 
 # OhMyZsh

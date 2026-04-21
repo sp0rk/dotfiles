@@ -37,10 +37,14 @@ Following files are created empty by chezmoi and never overwritten. Edit them di
 | File | Purpose |
 |------|---------|
 | `~/.config/zsh/pre.local.zsh` | Sourced at the start of `.zshrc` |
+| `~/.config/zsh/secrets.local` | Sourced near the start of `.zshrc` with auto-export enabled for local secrets |
 | `~/.config/zsh/post.local.zsh` | Sourced at the end of `.zshrc` |
 | `~/.config/zsh/aliases.local.zsh` | Sourced at the end of `.zsh_aliases` |
 | `~/.config/kitty/local.conf` | Included at the end of `kitty.conf` |
 | `~/.config/lite-xl/local.lua` | Loaded at the end of Lite XL `init.lua` |
+
+Put shell-style assignments in `~/.config/zsh/secrets.local`, for example `FOO_API_KEY=bar`.
+They are exported automatically so commands launched from zsh can read them from the environment.
 
 Runtime state is intentionally not tracked. For Lite XL, this means files such as `session.lua` and workspace state under `~/.config/lite-xl/ws/` stay local to each device.
 
