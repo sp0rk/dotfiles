@@ -14,7 +14,7 @@ source ~/.zsh_aliases
 
 ZSH_COMMAND_TIME_MIN_SECONDS=1
 
-export EDITOR="subl"
+export EDITOR="lite-xl"
 
 # Post-zshrc (device-specific)
 [[ -f ~/.config/zsh/post.local.zsh ]] && source ~/.config/zsh/post.local.zsh
