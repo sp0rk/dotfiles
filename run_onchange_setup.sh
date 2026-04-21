@@ -36,7 +36,7 @@ install_lite_xl_linux() {
 
   tmp="$(mktemp -d)"
   archive="$tmp/lite-xl.tar.gz"
-  url="https://github.com/lite-xl/lite-xl/releases/download/${tag}/lite-xl-${tag}-linux-x86_64-portable.tar.gz"
+  url="https://github.com/lite-xl/lite-xl/releases/download/${tag}/lite-xl-${tag}-addons-linux-x86_64-portable.tar.gz"
 
   curl -fL "$url" -o "$archive"
   tar -xzf "$archive" -C "$tmp"
@@ -68,7 +68,7 @@ install_lite_xl_macos() {
   dmg="$tmp/lite-xl.dmg"
   mount="$tmp/mount"
   app_path="$HOME/Applications/Lite XL.app"
-  url="https://github.com/lite-xl/lite-xl/releases/download/${tag}/lite-xl-${tag}-${asset}"
+  url="https://github.com/lite-xl/lite-xl/releases/download/${tag}/lite-xl-${tag}-addons-${asset}"
 
   mkdir -p "$mount" "$HOME/Applications" "$HOME/.local/bin"
   curl -fL "$url" -o "$dmg"
@@ -82,6 +82,11 @@ exec env LITE_XL_DATADIR="$app_path/Contents/Resources" "$app_path/Contents/MacO
 WRAPPER
   chmod +x "$HOME/.local/bin/lite-xl"
   rm -rf "$tmp"
+}
+
+lite_xl_has_plugin_manager() {
+  [ -f "$HOME/.local/share/lite-xl/plugins/plugin_manager/init.lua" ] ||
+    [ -f "$HOME/Applications/Lite XL.app/Contents/Resources/plugins/plugin_manager/init.lua" ]
 }
 
 # Install shell and setup prerequisites
@@ -142,7 +147,7 @@ if ! command -v kitty >/dev/null; then
 fi
 
 # Install Lite XL
-if ! command -v lite-xl >/dev/null; then
+if ! command -v lite-xl >/dev/null || ! lite_xl_has_plugin_manager; then
   if is_macos; then
     install_lite_xl_macos
   else
