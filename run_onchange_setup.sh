@@ -123,6 +123,23 @@ install_lite_xl_plugin_manager() {
   rm -rf "$tmp"
 }
 
+sync_lite_xl_plugins() {
+  local lpm plugins
+
+  lpm="$(find "$HOME/.config/lite-xl/plugins/plugin_manager" -maxdepth 1 -type f -name 'lpm.*' -perm -u+x | head -n 1)"
+  if [ ! -x "$lpm" ] || [ ! -f "$HOME/.config/lpm/settings.json" ]; then
+    return 0
+  fi
+
+  plugins="$(
+    python3 -c 'import json, sys; print(" ".join(json.load(open(sys.argv[1])).get("installed", [])))' "$HOME/.config/lpm/settings.json"
+  )"
+  if [ -n "$plugins" ]; then
+    # shellcheck disable=SC2086
+    "$lpm" install $plugins --assume-yes --userdir="$HOME/.config/lite-xl"
+  fi
+}
+
 # Install shell and setup prerequisites
 if ! command -v zsh >/dev/null; then
   if is_macos; then
@@ -190,6 +207,7 @@ if ! command -v lite-xl >/dev/null || ! lite_xl_has_plugin_manager; then
 fi
 
 install_lite_xl_plugin_manager
+sync_lite_xl_plugins
 
 # Install git hooks
 CHEZMOI_SRC="$HOME/.local/share/chezmoi"
