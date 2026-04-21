@@ -24,5 +24,10 @@ ZSH_COMMAND_TIME_MIN_SECONDS=1
 
 export EDITOR="lite-xl"
 
+lxl() {
+  lite-xl "$@" >/dev/null 2>&1 &
+  disown
+}
+
 # Post-zshrc (device-specific)
 [[ -f ~/.config/zsh/post.local.zsh ]] && source ~/.config/zsh/post.local.zsh
