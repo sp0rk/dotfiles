@@ -6,6 +6,7 @@ Managed with [chezmoi](https://chezmoi.io).
 
 - zsh
 - oh-my-zsh
+- p10k
 - kitty
 - Lite XL
 
@@ -20,8 +21,8 @@ sh -c "$(curl -fsLS https://get.chezmoi.io)" -- init --apply --ssh sp0rk
 - zsh
 - git
 - curl
-- thefuck and its Python compatibility dependency on Linux
 - oh-my-zsh and custom plugins
+- p10k
 - kitty
 - Lite XL
 
