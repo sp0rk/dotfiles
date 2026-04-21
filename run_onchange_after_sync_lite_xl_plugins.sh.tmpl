@@ -1,0 +1,36 @@
+#!/bin/bash
+
+set -e
+
+# LPM settings hash: {{ include "private_dot_config/lpm/settings.json" | sha256sum }}
+
+settings="$HOME/.config/lpm/settings.json"
+plugin_manager="$HOME/.config/lite-xl/plugins/plugin_manager"
+
+if [ ! -f "$settings" ]; then
+  exit 0
+fi
+
+lpm="$(find "$plugin_manager" -maxdepth 1 -type f -name 'lpm.*' -perm -u+x 2>/dev/null | head -n 1)"
+if [ ! -x "$lpm" ]; then
+  exit 0
+fi
+
+plugins="$(
+  python3 -c 'import json, sys; print(" ".join(json.load(open(sys.argv[1])).get("installed", [])))' "$settings"
+)"
+
+if [ -n "$plugins" ]; then
+  # shellcheck disable=SC2086
+  "$lpm" install $plugins --assume-yes --userdir="$HOME/.config/lite-xl"
+fi
+
+python3 -c '
+import json, sys
+path = sys.argv[1]
+with open(path) as f:
+    data = json.load(f)
+with open(path, "w") as f:
+    json.dump(data, f, sort_keys=True, separators=(",", ":"))
+    f.write("\n")
+' "$settings"
