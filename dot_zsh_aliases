@@ -1,0 +1,27 @@
+# Docker
+alias dr="docker run -it --rm=true"
+alias drb="dr --entrypoint /bin/bash"
+
+# Git
+alias gbu='gb "$(git branch --show-current)-bu"'
+alias gc-="gco -"
+alias gs="gst"
+
+# Scrcpy
+alias record="scrcpy --show-touches --select-usb --no-audio --record=file.mp4"
+alias mirror="scrcpy --show-touches --select-usb --no-audio"
+
+# Adb
+alias back="adb shell input keyevent 4"
+alias home="adb shell input keyevent 3"
+alias recents="adb shell input keyevent KEYCODE_APP_SWITCH"
+alias ip="adb shell ip addr show wlan0 | grep -e wlan0$ | cut -d ' ' -f 6 | cut -d/ -f 1"
+alias wm="adb shell wm size && adb shell wm density"
+alias wifi="adb shell am start -a android.settings.WIRELESS_SETTINGS"
+alias launch="adb shell monkey -c android.intent.category.LAUNCHER 1 -p"
+
+# Reveal-md
+alias present="open http://localhost:1948 && docker run --rm -p 1948:1948 -p 35729:35729 -v ~/pres:/slides webpronl/reveal-md:6.1.0 /slides --watch --css style.css --css plugin/chalkboard/style.css --css plugin/customcontrols/style.css"
+
+# Device-specific aliases
+[[ -f ~/.config/zsh/aliases.local.zsh ]] && source ~/.config/zsh/aliases.local.zsh

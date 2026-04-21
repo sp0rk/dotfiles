@@ -1,0 +1,14 @@
+#!/bin/bash
+while true; do
+  diff=$(chezmoi diff)
+  [ -z "$diff" ] && break
+  echo "chezmoi diff is not empty:"
+  echo "$diff"
+  echo ""
+  read -rp "Run 'chezmoi apply'? [y/f(force push)/q(abort, default)] " answer < /dev/tty
+  case "$answer" in
+    y|Y) chezmoi apply ;;
+    f|F) break ;;
+    *) echo "Push aborted."; exit 1 ;;
+  esac
+done
