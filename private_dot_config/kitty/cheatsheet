@@ -1,1 +1,8 @@
-f4 -> show cheatsheet
+f1 -> show cheatsheet
+f2 -> open Lite XL in current directory
+f3 -> open new pane
+f4 -> close current pane (confirm)
+f5 -> refresh kitty config
+f6 -> open new tab
+f7 -> switch to next tab
+f8 -> close current tab (confirm)
