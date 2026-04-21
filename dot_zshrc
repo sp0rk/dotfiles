@@ -24,7 +24,7 @@ ZSH_COMMAND_TIME_MIN_SECONDS=1
 
 export EDITOR="lite-xl"
 
-lxl() {
+lx() {
   lite-xl "$@" >/dev/null 2>&1 &
   disown
 }
