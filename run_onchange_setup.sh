@@ -85,8 +85,42 @@ WRAPPER
 }
 
 lite_xl_has_plugin_manager() {
+  [ -f "$HOME/.config/lite-xl/plugins/plugin_manager/init.lua" ] ||
   [ -f "$HOME/.local/share/lite-xl/plugins/plugin_manager/init.lua" ] ||
     [ -f "$HOME/Applications/Lite XL.app/Contents/Resources/plugins/plugin_manager/init.lua" ]
+}
+
+lite_xl_user_has_plugin_manager() {
+  [ -f "$HOME/.config/lite-xl/plugins/plugin_manager/init.lua" ]
+}
+
+lpm_arch() {
+  local arch os
+
+  arch="$(uname -m)"
+  os="$(uname | tr '[:upper:]' '[:lower:]')"
+  case "$arch" in
+    arm64) arch="aarch64" ;;
+  esac
+
+  printf '%s-%s\n' "$arch" "$os"
+}
+
+install_lite_xl_plugin_manager() {
+  local lpm tmp arch
+
+  if lite_xl_user_has_plugin_manager; then
+    return 0
+  fi
+
+  arch="$(lpm_arch)"
+  tmp="$(mktemp -d)"
+  lpm="$tmp/lpm"
+
+  curl -fL "https://github.com/lite-xl/lite-xl-plugin-manager/releases/download/latest/lpm.${arch}" -o "$lpm"
+  chmod +x "$lpm"
+  "$lpm" install plugin_manager --assume-yes --userdir="$HOME/.config/lite-xl"
+  rm -rf "$tmp"
 }
 
 # Install shell and setup prerequisites
@@ -154,6 +188,8 @@ if ! command -v lite-xl >/dev/null || ! lite_xl_has_plugin_manager; then
     install_lite_xl_linux
   fi
 fi
+
+install_lite_xl_plugin_manager
 
 # Install git hooks
 CHEZMOI_SRC="$HOME/.local/share/chezmoi"
