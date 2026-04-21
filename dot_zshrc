@@ -1,3 +1,10 @@
+# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
+# Initialization code that may require console input (password prompts, [y/n]
+# confirmations, etc.) must go above this block; everything else may go below.
+if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+fi
+
 # Pre-zshrc (device-specific)
 [[ -f ~/.config/zsh/pre.local.zsh ]] && source ~/.config/zsh/pre.local.zsh
 
@@ -5,8 +12,9 @@ export PATH="$HOME/bin:$HOME/.local/bin:$PATH"
 
 # OhMyZsh
 export ZSH="$HOME/.oh-my-zsh"
-ZSH_THEME="dst"
+ZSH_THEME="powerlevel10k/powerlevel10k"
 plugins=(git macos sublime zsh-autosuggestions web-search copyfile copybuffer dirhistory zsh-syntax-highlighting 1password aliases colored-man-pages command-not-found common-aliases colorize thefuck command-time)
+[[ -f ~/.p10k.zsh ]] && source ~/.p10k.zsh
 source $ZSH/oh-my-zsh.sh
 
 # Aliases
