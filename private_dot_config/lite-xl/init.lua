@@ -20,7 +20,10 @@ local style = require "core.style"
 -- pass 'true' for second parameter to overwrite an existing binding
 -- keymap.add({ ["ctrl+pageup"] = "root:switch-to-previous-tab" }, true)
 -- keymap.add({ ["ctrl+pagedown"] = "root:switch-to-next-tab" }, true)
-keymap.add({ ["ctrl+w"] = "root:close-or-quit" }, true)
+keymap.add({
+  ["ctrl+w"] = "selectionexpand:expand",
+  ["ctrl+shift+w"] = "selectionexpand:shrink",
+}, true)
 
 ------------------------------- Fonts ----------------------------------------
 
