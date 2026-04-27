@@ -166,6 +166,22 @@ if ! command -v curl >/dev/null; then
   fi
 fi
 
+if ! command -v tree >/dev/null; then
+  if is_macos; then
+    brew_install tree
+  else
+    apt_install tree
+  fi
+fi
+
+if ! command -v tldr >/dev/null; then
+  if is_macos; then
+    brew_install tldr
+  else
+    apt_install tldr
+  fi
+fi
+
 if is_macos; then
   if ! command -v thefuck >/dev/null; then
     brew_install thefuck
