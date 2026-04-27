@@ -22,7 +22,7 @@ plugins="$(
 
 if [ -n "$plugins" ]; then
   # shellcheck disable=SC2086
-  "$lpm" install $plugins --assume-yes --userdir="$HOME/.config/lite-xl"
+  "$lpm" install $plugins --quiet --assume-yes --userdir="$HOME/.config/lite-xl"
 fi
 
 python3 -c '
