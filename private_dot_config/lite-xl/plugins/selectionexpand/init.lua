@@ -1,5 +1,4 @@
 -- mod-version:3
--- Selection expansion inspired by IntelliJ IDEA's Ctrl+W behavior.
 
 local core = require "core"
 local common = require "core.common"
@@ -10,15 +9,23 @@ local DocView = require "core.docview"
 
 local selectionexpand = {}
 
-config.plugins.selectionexpand = common.merge({
-  -- When enabled, camelCase and PascalCase identifiers expand by subword first.
+local settings = {}
+local ranges = {}
+local analysis = {}
+local finders = {}
+local cache = {}
+local commands = {}
+
+settings.defaults = {
   separate_camel_case_words = true,
-}, config.plugins.selectionexpand)
+}
+
+config.plugins.selectionexpand = common.merge(settings.defaults, config.plugins.selectionexpand)
 
 config.plugins.selectionexpand.config_spec = {
   name = "Selection Expand",
   {
-    label = "Separate camelCase Words",
+    label = "Separate camelCase words",
     description = "Expand camelCase and PascalCase identifiers by subword first.",
     path = "separate_camel_case_words",
     type = "toggle",
@@ -27,6 +34,7 @@ config.plugins.selectionexpand.config_spec = {
 }
 
 local history_by_doc = setmetatable({}, { __mode = "k" })
+local analysis_by_doc = setmetatable({}, { __mode = "k" })
 
 local bracket_pairs = {
   ["("] = ")",
@@ -40,6 +48,8 @@ local closing_brackets = {
   ["}"] = true,
 }
 
+-- These tokens are intentionally broad. They provide useful block expansion
+-- for common brace, keyword, and indentation-oriented languages.
 local block_starters = {
   ["function"] = true,
   ["if"] = true,
@@ -80,11 +90,11 @@ local function is_blank(line)
   return not line or line:match("^%s*$") ~= nil
 end
 
-local function range_key(range)
+function ranges.key(range)
   return table.concat(range, ":")
 end
 
-local function snapshot_selections(doc)
+function ranges.snapshot_selections(doc)
   local selections = {}
   for _, line1, col1, line2, col2 in doc:get_selections(false) do
     selections[#selections + 1] = { line1, col1, line2, col2 }
@@ -92,7 +102,7 @@ local function snapshot_selections(doc)
   return selections
 end
 
-local function same_snapshot(a, b)
+function ranges.same_snapshot(a, b)
   if #a ~= #b then return false end
   for i = 1, #a do
     for j = 1, 4 do
@@ -102,7 +112,7 @@ local function same_snapshot(a, b)
   return true
 end
 
-local function apply_selections(doc, selections)
+function ranges.apply_selections(doc, selections)
   if #selections == 0 then return end
 
   local first = selections[1]
@@ -115,22 +125,43 @@ local function apply_selections(doc, selections)
   doc:merge_cursors()
 end
 
-local function make_text_index(doc)
-  local parts = {}
+function ranges.sorted_selection(doc, idx)
+  local line1, col1, line2, col2 = doc:get_selection_idx(idx, true)
+  return line1, col1, line2, col2
+end
+
+function ranges.contains_selection(index, candidate, sel_start, sel_end)
+  local start_offset = index.to_offset(candidate[1], candidate[2])
+  local end_offset = index.to_offset(candidate[3], candidate[4])
+  return start_offset <= sel_start and end_offset >= sel_end
+    and (start_offset < sel_start or end_offset > sel_end)
+    and end_offset > start_offset
+end
+
+function ranges.add_candidate(candidates, seen, doc, index, candidate, sel_start, sel_end)
+  if not candidate then return end
+
+  candidate[1], candidate[2] = doc:sanitize_position(candidate[1], candidate[2])
+  candidate[3], candidate[4] = doc:sanitize_position(candidate[3], candidate[4])
+  if not ranges.contains_selection(index, candidate, sel_start, sel_end) then return end
+
+  local key = ranges.key(candidate)
+  if not seen[key] then
+    seen[key] = true
+    candidates[#candidates + 1] = candidate
+  end
+end
+
+function analysis.make_text_index(doc)
   local line_starts = {}
   local offset = 1
 
   for i, line in ipairs(doc.lines) do
     line_starts[i] = offset
-    parts[#parts + 1] = line
     offset = offset + #line
-    if i < #doc.lines then
-      parts[#parts + 1] = "\n"
-      offset = offset + 1
-    end
   end
 
-  local text = table.concat(parts)
+  local text = table.concat(doc.lines)
 
   local function to_offset(line, col)
     line = math.max(1, math.min(line, #doc.lines))
@@ -163,31 +194,65 @@ local function make_text_index(doc)
   }
 end
 
-local function sorted_selection(doc, idx)
-  local line1, col1, line2, col2 = doc:get_selection_idx(idx, true)
-  return line1, col1, line2, col2
-end
+function analysis.parse_brackets(index)
+  local result = {}
+  local stack = {}
+  local text = index.text
+  local quote = nil
+  local escaped = false
 
-local function contains_selection(index, candidate, sel_start, sel_end)
-  local start_offset = index.to_offset(candidate[1], candidate[2])
-  local end_offset = index.to_offset(candidate[3], candidate[4])
-  return start_offset <= sel_start and end_offset >= sel_end
-    and (start_offset < sel_start or end_offset > sel_end)
-    and end_offset > start_offset
-end
+  -- This is a lightweight heuristic rather than a parser: quoted strings are
+  -- skipped and mismatched closers reset the current bracket stack.
+  for offset = 1, #text do
+    local char = text:sub(offset, offset)
 
-local function add_candidate(candidates, seen, doc, index, candidate, sel_start, sel_end)
-  if not candidate then return end
-
-  candidate[1], candidate[2] = doc:sanitize_position(candidate[1], candidate[2])
-  candidate[3], candidate[4] = doc:sanitize_position(candidate[3], candidate[4])
-  if not contains_selection(index, candidate, sel_start, sel_end) then return end
-
-  local key = range_key(candidate)
-  if not seen[key] then
-    seen[key] = true
-    candidates[#candidates + 1] = candidate
+    if quote then
+      if char == "\\" and not escaped then
+        escaped = true
+      else
+        if char == quote and not escaped then
+          quote = nil
+        end
+        escaped = false
+      end
+    elseif char == '"' or char == "'" or char == "`" then
+      quote = char
+    elseif bracket_pairs[char] then
+      stack[#stack + 1] = { char = char, offset = offset }
+    elseif closing_brackets[char] then
+      local opening = stack[#stack]
+      if opening and bracket_pairs[opening.char] == char then
+        stack[#stack] = nil
+        result[#result + 1] = {
+          content_start = opening.offset + 1,
+          content_end = offset,
+          full_start = opening.offset,
+          full_end = offset + 1,
+        }
+      else
+        stack = {}
+      end
+    end
   end
+
+  return result
+end
+
+function cache.for_doc(doc)
+  local change_id = doc:get_change_id()
+  local cached = analysis_by_doc[doc]
+  if cached and cached.change_id == change_id then
+    return cached
+  end
+
+  local index = analysis.make_text_index(doc)
+  cached = {
+    change_id = change_id,
+    index = index,
+    brackets = analysis.parse_brackets(index),
+  }
+  analysis_by_doc[doc] = cached
+  return cached
 end
 
 local function char_kind(char)
@@ -237,7 +302,7 @@ local function add_subwords(result, line, token_start, segment_start, segment_te
   result[#result + 1] = { line, first, line, last + 1 }
 end
 
-local function word_candidates(doc, line, col)
+function finders.word_candidates(doc, line, col)
   local text = doc.lines[line] or ""
   local result = {}
   if text == "" then return result end
@@ -291,7 +356,7 @@ local function word_candidates(doc, line, col)
   return result
 end
 
-local function line_candidates(doc, line)
+function finders.line_candidates(doc, line)
   local result = {
     { line, 1, line, line_end_col(doc, line) },
   }
@@ -303,7 +368,7 @@ local function line_candidates(doc, line)
   return result
 end
 
-local function string_candidates(doc, line, sel_start_col, sel_end_col)
+function finders.string_candidates(doc, line, sel_start_col, sel_end_col)
   local text = doc.lines[line] or ""
   local result = {}
 
@@ -337,46 +402,20 @@ local function string_candidates(doc, line, sel_start_col, sel_end_col)
   return result
 end
 
-local function bracket_candidates(doc, index, sel_start, sel_end)
+function finders.bracket_candidates(index, bracket_ranges, sel_start, sel_end)
   local result = {}
-  local stack = {}
-  local text = index.text
-  local quote = nil
-  local escaped = false
 
-  for offset = 1, #text do
-    local char = text:sub(offset, offset)
+  for _, bracket_range in ipairs(bracket_ranges) do
+    if bracket_range.full_start < sel_start and bracket_range.full_end >= sel_end then
+      if bracket_range.content_start < bracket_range.content_end then
+        local l1, c1 = index.to_position(bracket_range.content_start)
+        local l2, c2 = index.to_position(bracket_range.content_end)
+        result[#result + 1] = { l1, c1, l2, c2 }
+      end
 
-    if quote then
-      if char == "\\" and not escaped then
-        escaped = true
-      else
-        if char == quote and not escaped then
-          quote = nil
-        end
-        escaped = false
-      end
-    elseif char == '"' or char == "'" or char == "`" then
-      quote = char
-    elseif bracket_pairs[char] then
-      stack[#stack + 1] = { char = char, offset = offset }
-    elseif closing_brackets[char] then
-      local opening = stack[#stack]
-      if opening and bracket_pairs[opening.char] == char then
-        stack[#stack] = nil
-        if opening.offset < sel_start and offset + 1 >= sel_end then
-          local l1, c1 = index.to_position(opening.offset + 1)
-          local l2, c2 = index.to_position(offset)
-          if opening.offset + 1 < offset then
-            result[#result + 1] = { l1, c1, l2, c2 }
-          end
-          l1, c1 = index.to_position(opening.offset)
-          l2, c2 = index.to_position(offset + 1)
-          result[#result + 1] = { l1, c1, l2, c2 }
-        end
-      else
-        stack = {}
-      end
+      local l1, c1 = index.to_position(bracket_range.full_start)
+      local l2, c2 = index.to_position(bracket_range.full_end)
+      result[#result + 1] = { l1, c1, l2, c2 }
     end
   end
 
@@ -395,7 +434,7 @@ local function nonblank_line_near(doc, line)
   return line
 end
 
-local function indentation_candidates(doc, line)
+function finders.indentation_candidates(doc, line)
   local result = {}
   line = nonblank_line_near(doc, line)
 
@@ -446,7 +485,7 @@ local function indentation_candidates(doc, line)
   return result
 end
 
-local function keyword_block_candidate(doc, line)
+function finders.keyword_block_candidate(doc, line)
   local start_line = nil
 
   for row = line, 1, -1 do
@@ -478,12 +517,13 @@ local function keyword_block_candidate(doc, line)
   end
 end
 
-local function document_candidate(doc)
+function finders.document_candidate(doc)
   return { 1, 1, #doc.lines, line_end_col(doc, #doc.lines) }
 end
 
-local function best_expansion_for_selection(doc, index, idx)
-  local line1, col1, line2, col2 = sorted_selection(doc, idx)
+local function best_expansion_for_selection(doc, doc_analysis, idx)
+  local index = doc_analysis.index
+  local line1, col1, line2, col2 = ranges.sorted_selection(doc, idx)
   local sel_start = index.to_offset(line1, col1)
   local sel_end = index.to_offset(line2, col2)
   local caret_line = line2
@@ -491,28 +531,28 @@ local function best_expansion_for_selection(doc, index, idx)
   local candidates = {}
   local seen = {}
 
-  for _, candidate in ipairs(word_candidates(doc, caret_line, caret_col)) do
-    add_candidate(candidates, seen, doc, index, candidate, sel_start, sel_end)
+  for _, candidate in ipairs(finders.word_candidates(doc, caret_line, caret_col)) do
+    ranges.add_candidate(candidates, seen, doc, index, candidate, sel_start, sel_end)
   end
 
-  for _, candidate in ipairs(string_candidates(doc, caret_line, col1, col2)) do
-    add_candidate(candidates, seen, doc, index, candidate, sel_start, sel_end)
+  for _, candidate in ipairs(finders.string_candidates(doc, caret_line, col1, col2)) do
+    ranges.add_candidate(candidates, seen, doc, index, candidate, sel_start, sel_end)
   end
 
-  for _, candidate in ipairs(bracket_candidates(doc, index, sel_start, sel_end)) do
-    add_candidate(candidates, seen, doc, index, candidate, sel_start, sel_end)
+  for _, candidate in ipairs(finders.bracket_candidates(index, doc_analysis.brackets, sel_start, sel_end)) do
+    ranges.add_candidate(candidates, seen, doc, index, candidate, sel_start, sel_end)
   end
 
-  for _, candidate in ipairs(line_candidates(doc, caret_line)) do
-    add_candidate(candidates, seen, doc, index, candidate, sel_start, sel_end)
+  for _, candidate in ipairs(finders.line_candidates(doc, caret_line)) do
+    ranges.add_candidate(candidates, seen, doc, index, candidate, sel_start, sel_end)
   end
 
-  for _, candidate in ipairs(indentation_candidates(doc, caret_line)) do
-    add_candidate(candidates, seen, doc, index, candidate, sel_start, sel_end)
+  for _, candidate in ipairs(finders.indentation_candidates(doc, caret_line)) do
+    ranges.add_candidate(candidates, seen, doc, index, candidate, sel_start, sel_end)
   end
 
-  add_candidate(candidates, seen, doc, index, keyword_block_candidate(doc, caret_line), sel_start, sel_end)
-  add_candidate(candidates, seen, doc, index, document_candidate(doc), sel_start, sel_end)
+  ranges.add_candidate(candidates, seen, doc, index, finders.keyword_block_candidate(doc, caret_line), sel_start, sel_end)
+  ranges.add_candidate(candidates, seen, doc, index, finders.document_candidate(doc), sel_start, sel_end)
 
   table.sort(candidates, function(a, b)
     local a_start = index.to_offset(a[1], a[2])
@@ -532,24 +572,25 @@ function selectionexpand.expand(doc)
   doc = doc or (core.active_view and core.active_view.doc)
   if not doc then return end
 
-  local before = snapshot_selections(doc)
-  local index = make_text_index(doc)
+  local before = ranges.snapshot_selections(doc)
+  local doc_analysis = cache.for_doc(doc)
   local after = {}
 
   for idx = 1, #before do
-    after[#after + 1] = best_expansion_for_selection(doc, index, idx)
+    after[#after + 1] = best_expansion_for_selection(doc, doc_analysis, idx)
   end
 
-  if same_snapshot(before, after) then return end
+  if ranges.same_snapshot(before, after) then return end
 
+  local change_id = doc:get_change_id()
   local history = history_by_doc[doc]
-  if not history or history.change_id ~= doc:get_change_id() then
-    history = { change_id = doc:get_change_id(), stack = {} }
+  if not history or history.change_id ~= change_id then
+    history = { change_id = change_id, stack = {} }
     history_by_doc[doc] = history
   end
 
   history.stack[#history.stack + 1] = before
-  apply_selections(doc, after)
+  ranges.apply_selections(doc, after)
 end
 
 function selectionexpand.shrink(doc)
@@ -563,21 +604,25 @@ function selectionexpand.shrink(doc)
 
   local previous = history.stack[#history.stack]
   history.stack[#history.stack] = nil
-  apply_selections(doc, previous)
+  ranges.apply_selections(doc, previous)
 end
 
-command.add(DocView, {
-  ["selectionexpand:expand"] = function(doc_view)
-    selectionexpand.expand(doc_view.doc)
-  end,
-  ["selectionexpand:shrink"] = function(doc_view)
-    selectionexpand.shrink(doc_view.doc)
-  end,
-})
+function commands.register()
+  command.add(DocView, {
+    ["selectionexpand:expand"] = function(doc_view)
+      selectionexpand.expand(doc_view.doc)
+    end,
+    ["selectionexpand:shrink"] = function(doc_view)
+      selectionexpand.shrink(doc_view.doc)
+    end,
+  })
 
-keymap.add {
-  ["ctrl+w"] = "selectionexpand:expand",
-  ["ctrl+shift+w"] = "selectionexpand:shrink",
-}
+  keymap.add {
+    ["ctrl+w"] = "selectionexpand:expand",
+    ["ctrl+shift+w"] = "selectionexpand:shrink",
+  }
+end
+
+commands.register()
 
 return selectionexpand

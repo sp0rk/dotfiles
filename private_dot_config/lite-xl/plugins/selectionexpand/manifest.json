@@ -1,0 +1,12 @@
+{
+  "addons": [
+    {
+      "description": "Selection expansion known from other editors for Lite XL.",
+      "id": "selectionexpand",
+      "mod_version": "3",
+      "name": "Selection Expand",
+      "path": "init.lua",
+      "version": "0.1.0"
+    }
+  ]
+}
