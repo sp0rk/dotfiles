@@ -2,6 +2,6 @@ README.md
 AGENTS.md
 hooks
 
-{{ if ne .chezmoi.osRelease.id "linuxmint" }}
+{{ if ne (index .chezmoi.osRelease "id") "linuxmint" }}
 private_dot_config/input-remapper-2
 {{ end }}
