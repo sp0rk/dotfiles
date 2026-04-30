@@ -24,6 +24,9 @@ plugins=(git macos sublime zsh-autosuggestions web-search copyfile copybuffer di
 [[ -f ~/.p10k.zsh ]] && source ~/.p10k.zsh
 source $ZSH/oh-my-zsh.sh
 
+# Pass unmatched globs as literals (e.g. parentheses in branch names)
+setopt NO_NOMATCH
+
 # Aliases
 source ~/.zsh_aliases
 
