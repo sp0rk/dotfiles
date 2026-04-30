@@ -7,6 +7,9 @@ alias gbu='gb "$(git branch --show-current)-bu"'
 alias gc-="gco -"
 alias gs="gst"
 
+# Chezmoi
+alias chezmoicd="cd ~/.local/share/chezmoi"
+
 # Scrcpy
 alias record="scrcpy --show-touches --select-usb --no-audio --record=file.mp4"
 alias mirror="scrcpy --show-touches --select-usb --no-audio"
