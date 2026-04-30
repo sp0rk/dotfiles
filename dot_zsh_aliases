@@ -5,6 +5,7 @@ alias drb="dr --entrypoint /bin/bash"
 # Git
 alias gbu='gb "$(git branch --show-current)-bu"'
 alias gc-="gco -"
+alias gcm="git commit -m"
 alias gs="gst"
 
 # Chezmoi
