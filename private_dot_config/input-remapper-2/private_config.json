@@ -1,6 +1,7 @@
 {
     "version": "2.0.1",
     "autoload": {
-        "Magic Keyboard": "mgckb"
+        "Magic Keyboard": "mgckb",
+        "Apple Inc. Magic Keyboard": "mgkb"
     }
 }
