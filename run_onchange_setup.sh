@@ -192,6 +192,52 @@ else
   fi
 fi
 
+if ! command -v eza >/dev/null; then
+  if is_macos; then
+    brew_install eza
+  else
+    sudo mkdir -p /etc/apt/keyrings
+    wget -qO- https://raw.githubusercontent.com/eza-community/eza/main/deb.asc | sudo gpg --dearmor -o /etc/apt/keyrings/gierens.gpg
+    echo "deb [signed-by=/etc/apt/keyrings/gierens.gpg] http://deb.gierens.de stable main" | sudo tee /etc/apt/sources.list.d/gierens.list
+    sudo chmod 644 /etc/apt/keyrings/gierens.gpg /etc/apt/sources.list.d/gierens.list
+    apt_install eza
+  fi
+fi
+
+if ! command -v zoxide >/dev/null; then
+  if is_macos; then
+    brew_install zoxide
+  else
+    curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh
+  fi
+fi
+
+if ! command -v espanso >/dev/null; then
+  if is_macos; then
+    brew_install espanso
+  else
+    tmp="$(mktemp -d)"
+    wget -O "$tmp/espanso.deb" "https://github.com/espanso/espanso/releases/latest/download/espanso-debian-x11-amd64.deb"
+    sudo apt install -y "$tmp/espanso.deb" </dev/tty
+    rm -rf "$tmp"
+    espanso service register
+  fi
+fi
+
+# Symlink espanso config on macOS so chezmoi-managed ~/.config/espanso is used
+if is_macos; then
+  mkdir -p "$HOME/.config/espanso"
+  if [ ! -L "$HOME/Library/Application Support/espanso" ]; then
+    rm -rf "$HOME/Library/Application Support/espanso"
+    ln -s "$HOME/.config/espanso" "$HOME/Library/Application Support/espanso"
+  fi
+fi
+
+# Install espanso shruggie package
+if command -v espanso >/dev/null && [ ! -d "$(espanso path packages 2>/dev/null)/shruggie" ]; then
+  espanso install shruggie --force
+fi
+
 # Install oh-my-zsh
 if [ ! -d "$HOME/.oh-my-zsh" ]; then
   sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended

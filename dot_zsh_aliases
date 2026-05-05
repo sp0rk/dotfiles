@@ -1,3 +1,6 @@
+# Eza
+alias ls="eza -l --icons --git --group-directories-first --header"
+
 # Docker
 alias dr="docker run -it --rm=true"
 alias drb="dr --entrypoint /bin/bash"

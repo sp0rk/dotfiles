@@ -1,0 +1,5 @@
+# Espanso match definitions
+# The "shruggie" package is installed via `espanso install shruggie`
+# Type :shrug to get ¯\_(ツ)_/¯
+
+matches: []
