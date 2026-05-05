@@ -1,5 +1,6 @@
 # Eza
-alias ls="eza -l --icons --git --group-directories-first --header"
+alias ls="eza --group-directories-last --time-style relative -hal"
+alias lst="eza --group-directories-last --time-style relative -halTL=2"
 
 # Docker
 alias dr="docker run -it --rm=true"
