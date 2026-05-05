@@ -2,13 +2,22 @@
 
 Managed with [chezmoi](https://chezmoi.io).
 
-## What's shared
+## Managed tools
 
-- zsh
-- oh-my-zsh
-- p10k
-- kitty
-- Lite XL
+- Shell
+  - **zsh** — Default shell, set automatically on first run.
+  - **oh-my-zsh** — Zsh plugin/theme framework.
+  - **p10k** — Powerlevel10k prompt theme for zsh.
+- CLI
+  - **zoxide** — Smarter cd command that learns your most-used directories (replaces `cd`).
+  - **eza** — Modern ls replacement with icons, git status, and color (replaces `ls`).
+  - **thefuck** — Corrects previous console commands.
+  - **tree** — Directory listing in tree format.
+  - **tldr** — Simplified man pages with practical examples.
+- Apps
+  - **kitty** — Terminal emulator.
+  - **Lite XL** — Text editor.
+  - **espanso** — OS-wide text expander.
 
 ## Setup
 
@@ -16,17 +25,7 @@ Managed with [chezmoi](https://chezmoi.io).
 sh -c "$(curl -fsLS https://get.chezmoi.io)" -- init --apply --ssh sp0rk
 ```
 
-`run_onchange_setup.sh` runs automatically when it changes. It installs prerequisites and tools for macOS and Linux:
-
-- zsh
-- git
-- curl
-- oh-my-zsh and custom plugins
-- p10k
-- kitty
-- Lite XL
-
-It also symlinks the repo git hook, sets the default shell to zsh, and sets git/chezmoi editors to `lite-xl`.
+`run_onchange_setup.sh` runs automatically when it changes. It installs all managed tools for macOS and Linux, symlinks the repo git hook, sets the default shell to zsh, and sets git/chezmoi editors to `lite-xl`.
 
 On macOS, packages are installed with Homebrew where available. Lite XL is installed from the latest official GitHub DMG into `~/Applications`. On Linux, apt is used for packaged tools, and Lite XL is installed from the latest official GitHub tarball into `~/.local`.
 
