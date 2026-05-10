@@ -10,10 +10,13 @@ alias drb="dr --entrypoint /bin/bash"
 alias gbu='gb "$(git branch --show-current)-bu"'
 alias gc-="gco -"
 alias gcm="git commit -m"
+alias gcan="git commit --amend --no-edit"
+alias gcam="git commit --amend -m"
 alias gs="gst"
 
 # Chezmoi
 alias chezmoicd="cd ~/.local/share/chezmoi"
+alias chezmoilx="cd ~/.local/share/chezmoi && lx ."
 
 # Scrcpy
 alias record="scrcpy --show-touches --select-usb --no-audio --record=file.mp4"
