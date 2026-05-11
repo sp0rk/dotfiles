@@ -7,16 +7,19 @@ alias dr="docker run -it --rm=true"
 alias drb="dr --entrypoint /bin/bash"
 
 # Git
-alias gbu='gb "$(git branch --show-current)-bu"'
+alias gs="gst"
 alias gc-="gco -"
 alias gcm="git commit -m"
 alias gcan="git commit --amend --no-edit"
 alias gcam="git commit --amend -m"
-alias gs="gst"
+alias gpf="git push -f"
+alias gpn="git push --no-verify"
+alias gpfn="git push -f --no-verify"
 
 # Chezmoi
 alias chezmoicd="cd ~/.local/share/chezmoi"
 alias chezmoilx="cd ~/.local/share/chezmoi && lx ."
+alias chezmoip="chezmoi update"
 
 # Scrcpy
 alias record="scrcpy --show-touches --select-usb --no-audio --record=file.mp4"
