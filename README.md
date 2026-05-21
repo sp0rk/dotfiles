@@ -89,3 +89,6 @@ Runtime state is intentionally not tracked. For Lite XL, this means files such a
 ## Git hooks
 
 A `pre-push` hook checks `chezmoi diff` before pushing. If there are unapplied changes, it prompts to apply, force push, or abort. The hook is symlinked from `hooks/pre-push` by `run_onchange_setup.sh`.
+
+| ![](assets/screenshots/1.png) | ![](assets/screenshots/2.png) |
+| --- | --- |
