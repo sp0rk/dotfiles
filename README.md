@@ -2,6 +2,16 @@
 
 Managed with [chezmoi](https://chezmoi.io).
 
+## Setup
+
+```sh
+sh -c "$(curl -fsLS https://get.chezmoi.io)" -- init --apply --ssh sp0rk
+```
+
+`run_onchange_setup.sh` runs automatically when it changes. It installs all managed tools, symlinks the repo git hook, sets the default shell to zsh, and sets git/chezmoi editors to `lite-xl`.
+
+On macOS, packages are installed with Homebrew where available. Lite XL is installed from the latest official GitHub DMG into `~/Applications`. On Linux, apt is used for packaged tools, and Lite XL is installed from the latest official GitHub tarball into `~/.local`.
+
 ## Managed tools
 
 - Shell
@@ -21,31 +31,6 @@ Managed with [chezmoi](https://chezmoi.io).
   - **kitty** — Terminal emulator.
   - **Lite XL** — Text editor.
   - **espanso** — OS-wide text expander.
-
-## Setup
-
-```sh
-sh -c "$(curl -fsLS https://get.chezmoi.io)" -- init --apply --ssh sp0rk
-```
-
-`run_onchange_setup.sh` runs automatically when it changes. It installs all managed tools for macOS and Linux, symlinks the repo git hook, sets the default shell to zsh, and sets git/chezmoi editors to `lite-xl`.
-
-On macOS, packages are installed with Homebrew where available. Lite XL is installed from the latest official GitHub DMG into `~/Applications`. On Linux, apt is used for packaged tools, and Lite XL is installed from the latest official GitHub tarball into `~/.local`.
-
-## Dependencies
-
-Also installed by the setup script when missing:
-
-- `ffmpeg`
-- `jq`
-- `7zip` / `sevenzip`
-- `poppler-utils` / `poppler`
-- `fd-find` / `fd`
-- `ripgrep`
-- `fzf`
-- `zoxide`
-- `imagemagick`
-- `resvg`
 
 ## Zsh Plugins
 
@@ -68,6 +53,21 @@ Also installed by the setup script when missing:
 - `command-time`
 - `zsh-syntax-highlighting`
 
+## Dependencies
+
+Also installed by the setup script when missing:
+
+- `ffmpeg`
+- `jq`
+- `7zip` / `sevenzip`
+- `poppler-utils` / `poppler`
+- `fd-find` / `fd`
+- `ripgrep`
+- `fzf`
+- `zoxide`
+- `imagemagick`
+- `resvg`
+
 ## Device-specific configuration
 
 Following files are created empty by chezmoi and never overwritten. Edit them directly on each device:
@@ -84,11 +84,11 @@ Following files are created empty by chezmoi and never overwritten. Edit them di
 Put shell-style assignments in `~/.config/zsh/secrets.local`, for example `FOO_API_KEY=bar`.
 They are exported automatically so commands launched from zsh can read them from the environment.
 
-Runtime state is intentionally not tracked. For Lite XL, this means files such as `session.lua` and workspace state under `~/.config/lite-xl/ws/` stay local to each device.
-
 ## Git hooks
 
 A `pre-push` hook checks `chezmoi diff` before pushing. If there are unapplied changes, it prompts to apply, force push, or abort. The hook is symlinked from `hooks/pre-push` by `run_onchange_setup.sh`.
+
+## Preview
 
 | ![](assets/screenshots/1.png) | ![](assets/screenshots/2.png) |
 | --- | --- |
