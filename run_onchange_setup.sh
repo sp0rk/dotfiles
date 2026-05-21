@@ -25,6 +25,12 @@ github_latest_lite_xl_tag() {
     head -n 1
 }
 
+github_latest_bottom_tag() {
+  curl -fsSL https://api.github.com/repos/ClementTsang/bottom/releases/latest |
+    sed -n 's/.*"tag_name": "\([^"]*\)".*/\1/p' |
+    head -n 1
+}
+
 install_lite_xl_linux() {
   local tag tmp archive url
 
@@ -81,6 +87,33 @@ install_lite_xl_macos() {
 exec env LITE_XL_DATADIR="$app_path/Contents/Resources" "$app_path/Contents/MacOS/lite-xl" "\$@"
 WRAPPER
   chmod +x "$HOME/.local/bin/lite-xl"
+  rm -rf "$tmp"
+}
+
+install_bottom_linux() {
+  local tag tmp arch deb url
+
+  tag="$(github_latest_bottom_tag)"
+  if [ -z "$tag" ]; then
+    echo "Unable to find latest bottom release tag" >&2
+    return 1
+  fi
+
+  arch="$(dpkg --print-architecture)"
+  case "$arch" in
+    amd64|arm64|armhf) ;;
+    *)
+      echo "Unsupported architecture for bottom .deb install: $arch" >&2
+      return 1
+      ;;
+  esac
+
+  tmp="$(mktemp -d)"
+  deb="$tmp/bottom_${tag#v}-1_${arch}.deb"
+  url="https://github.com/ClementTsang/bottom/releases/download/${tag}/bottom_${tag#v}-1_${arch}.deb"
+
+  curl -fL "$url" -o "$deb"
+  sudo dpkg -i "$deb" </dev/tty
   rm -rf "$tmp"
 }
 
@@ -179,6 +212,14 @@ if ! command -v tldr >/dev/null; then
     brew_install tldr
   else
     apt_install tldr
+  fi
+fi
+
+if ! command -v btm >/dev/null; then
+  if is_macos; then
+    brew_install bottom
+  else
+    install_bottom_linux
   fi
 fi
 
