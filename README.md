@@ -9,12 +9,13 @@ Managed with [chezmoi](https://chezmoi.io).
   - **oh-my-zsh** — Zsh plugin/theme framework.
   - **p10k** — Powerlevel10k prompt theme for zsh.
 - CLI
-  - **bottom** — Terminal system monitor.
-  - **zoxide** — Smarter cd command that learns your most-used directories (replaces `cd`).
-  - **eza** — Modern ls replacement with icons, git status, and color (replaces `ls`).
+  - **bat** — Better `cat` (replaces `cat`).
+  - **bottom** — Better `top`.
+  - **zoxide** — Better `cd` (replaces `cd`).
+  - **eza** — Better `ls` (replaces `ls`).
   - **thefuck** — Corrects previous console commands.
   - **tree** — Directory listing in tree format.
-  - **tldr** — Simplified man pages with practical examples.
+  - **tldr** — Better `man`.
 - Apps
   - **kitty** — Terminal emulator.
   - **Lite XL** — Text editor.

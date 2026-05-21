@@ -19,6 +19,20 @@ brew_install_cask() {
   brew install --cask "$@"
 }
 
+ensure_bat_command_linux() {
+  if command -v bat >/dev/null; then
+    return 0
+  fi
+
+  if ! command -v batcat >/dev/null; then
+    echo "bat installed but neither bat nor batcat is available" >&2
+    return 1
+  fi
+
+  mkdir -p "$HOME/.local/bin"
+  ln -sf /usr/bin/batcat "$HOME/.local/bin/bat"
+}
+
 github_latest_lite_xl_tag() {
   curl -fsSL https://api.github.com/repos/lite-xl/lite-xl/releases/latest |
     sed -n 's/.*"tag_name": "\(v[^"]*\)".*/\1/p' |
@@ -212,6 +226,15 @@ if ! command -v tldr >/dev/null; then
     brew_install tldr
   else
     apt_install tldr
+  fi
+fi
+
+if ! command -v bat >/dev/null; then
+  if is_macos; then
+    brew_install bat
+  else
+    apt_install bat
+    ensure_bat_command_linux
   fi
 fi
 
