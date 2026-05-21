@@ -19,6 +19,24 @@ brew_install_cask() {
   brew install --cask "$@"
 }
 
+deb_package_installed() {
+  dpkg-query -W -f='${Status}' "$1" 2>/dev/null | grep -q "install ok installed"
+}
+
+ensure_fd_command_linux() {
+  if command -v fd >/dev/null; then
+    return 0
+  fi
+
+  if ! command -v fdfind >/dev/null; then
+    echo "fd-find installed but neither fd nor fdfind is available" >&2
+    return 1
+  fi
+
+  mkdir -p "$HOME/.local/bin"
+  ln -sf /usr/bin/fdfind "$HOME/.local/bin/fd"
+}
+
 ensure_bat_command_linux() {
   if command -v bat >/dev/null; then
     return 0
@@ -41,6 +59,12 @@ github_latest_lite_xl_tag() {
 
 github_latest_bottom_tag() {
   curl -fsSL https://api.github.com/repos/ClementTsang/bottom/releases/latest |
+    sed -n 's/.*"tag_name": "\([^"]*\)".*/\1/p' |
+    head -n 1
+}
+
+github_latest_yazi_tag() {
+  curl -fsSL https://api.github.com/repos/sxyazi/yazi/releases/latest |
     sed -n 's/.*"tag_name": "\([^"]*\)".*/\1/p' |
     head -n 1
 }
@@ -125,6 +149,34 @@ install_bottom_linux() {
   tmp="$(mktemp -d)"
   deb="$tmp/bottom_${tag#v}-1_${arch}.deb"
   url="https://github.com/ClementTsang/bottom/releases/download/${tag}/bottom_${tag#v}-1_${arch}.deb"
+
+  curl -fL "$url" -o "$deb"
+  sudo dpkg -i "$deb" </dev/tty
+  rm -rf "$tmp"
+}
+
+install_yazi_linux() {
+  local tag tmp arch asset deb url
+
+  tag="$(github_latest_yazi_tag)"
+  if [ -z "$tag" ]; then
+    echo "Unable to find latest Yazi release tag" >&2
+    return 1
+  fi
+
+  arch="$(dpkg --print-architecture)"
+  case "$arch" in
+    amd64) asset="x86_64-unknown-linux-gnu" ;;
+    arm64) asset="aarch64-unknown-linux-gnu" ;;
+    *)
+      echo "Unsupported architecture for Yazi .deb install: $arch" >&2
+      return 1
+      ;;
+  esac
+
+  tmp="$(mktemp -d)"
+  deb="$tmp/yazi-${asset}.deb"
+  url="https://github.com/sxyazi/yazi/releases/download/${tag}/yazi-${asset}.deb"
 
   curl -fL "$url" -o "$deb"
   sudo dpkg -i "$deb" </dev/tty
@@ -238,6 +290,44 @@ if ! command -v bat >/dev/null; then
   fi
 fi
 
+if ! command -v fd >/dev/null; then
+  if is_macos; then
+    brew_install fd
+  else
+    apt_install fd-find
+    ensure_fd_command_linux
+  fi
+fi
+
+if is_macos; then
+  command -v ffmpeg >/dev/null || brew_install ffmpeg-full
+  command -v jq >/dev/null || brew_install jq
+  command -v 7z >/dev/null || brew_install sevenzip
+  command -v pdftotext >/dev/null || brew_install poppler
+  command -v rg >/dev/null || brew_install ripgrep
+  command -v fzf >/dev/null || brew_install fzf
+  command -v zoxide >/dev/null || brew_install zoxide
+  command -v resvg >/dev/null || brew_install resvg
+  command -v magick >/dev/null || brew_install imagemagick-full
+else
+  command -v ffmpeg >/dev/null || apt_install ffmpeg
+  command -v jq >/dev/null || apt_install jq
+  command -v 7z >/dev/null || apt_install 7zip
+  command -v pdftotext >/dev/null || apt_install poppler-utils
+  command -v rg >/dev/null || apt_install ripgrep
+  command -v fzf >/dev/null || apt_install fzf
+  deb_package_installed zoxide || apt_install zoxide
+  command -v magick >/dev/null || apt_install imagemagick
+fi
+
+if is_macos; then
+  command -v yazi >/dev/null || brew_install yazi
+else
+  if ! deb_package_installed yazi; then
+    install_yazi_linux
+  fi
+fi
+
 if ! command -v btm >/dev/null; then
   if is_macos; then
     brew_install bottom
@@ -265,14 +355,6 @@ if ! command -v eza >/dev/null; then
     echo "deb [signed-by=/etc/apt/keyrings/gierens.gpg] http://deb.gierens.de stable main" | sudo tee /etc/apt/sources.list.d/gierens.list
     sudo chmod 644 /etc/apt/keyrings/gierens.gpg /etc/apt/sources.list.d/gierens.list
     apt_install eza
-  fi
-fi
-
-if ! command -v zoxide >/dev/null; then
-  if is_macos; then
-    brew_install zoxide
-  else
-    curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh
   fi
 fi
 

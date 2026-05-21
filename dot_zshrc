@@ -59,5 +59,14 @@ lx() {
   lite-xl "$@" >/dev/null 2>&1 &!
 }
 
+y() {
+  local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
+
+  command yazi "$@" --cwd-file="$tmp"
+  IFS= read -r -d '' cwd < "$tmp"
+  [ -n "$cwd" ] && [ "$cwd" != "$PWD" ] && [ -d "$cwd" ] && builtin cd -- "$cwd"
+  rm -f -- "$tmp"
+}
+
 # Post-zshrc (device-specific)
 [[ -f ~/.config/zsh/post.local.zsh ]] && source ~/.config/zsh/post.local.zsh

@@ -11,6 +11,7 @@ Managed with [chezmoi](https://chezmoi.io).
 - CLI
   - **bat** — Better `cat` (replaces `cat`).
   - **bottom** — Better `top`.
+  - **yazi** — Terminal file manager.
   - **zoxide** — Better `cd` (replaces `cd`).
   - **eza** — Better `ls` (replaces `ls`).
   - **thefuck** — Corrects previous console commands.
@@ -30,6 +31,42 @@ sh -c "$(curl -fsLS https://get.chezmoi.io)" -- init --apply --ssh sp0rk
 `run_onchange_setup.sh` runs automatically when it changes. It installs all managed tools for macOS and Linux, symlinks the repo git hook, sets the default shell to zsh, and sets git/chezmoi editors to `lite-xl`.
 
 On macOS, packages are installed with Homebrew where available. Lite XL is installed from the latest official GitHub DMG into `~/Applications`. On Linux, apt is used for packaged tools, and Lite XL is installed from the latest official GitHub tarball into `~/.local`.
+
+## Dependencies
+
+Also installed by the setup script when missing:
+
+- `ffmpeg`
+- `jq`
+- `7zip` / `sevenzip`
+- `poppler-utils` / `poppler`
+- `fd-find` / `fd`
+- `ripgrep`
+- `fzf`
+- `zoxide`
+- `imagemagick`
+- `resvg`
+
+## Zsh Plugins
+
+- `git`
+- `macos`
+- `sublime`
+- `fzf-tab`
+- `zsh-autosuggestions`
+- `web-search`
+- `copyfile`
+- `copybuffer`
+- `dirhistory`
+- `1password`
+- `aliases`
+- `colored-man-pages`
+- `command-not-found`
+- `common-aliases`
+- `colorize`
+- `thefuck`
+- `command-time`
+- `zsh-syntax-highlighting`
 
 ## Device-specific configuration
 
