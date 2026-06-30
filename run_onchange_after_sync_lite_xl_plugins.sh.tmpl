@@ -25,6 +25,14 @@ if [ -n "$plugins" ]; then
   "$lpm" install $plugins --quiet --assume-yes --userdir="$HOME/.config/lite-xl"
 fi
 
+# On macOS, Lite XL expects native libraries to use .lib extension, but some
+# packages (e.g. encoding) are distributed with .so. Rename them.
+if [ "$(uname)" = "Darwin" ]; then
+  find "$HOME/.config/lite-xl" -name "*.aarch64-darwin.so" -o -name "*.x86_64-darwin.so" | while read -r f; do
+    mv "$f" "${f%.so}.lib"
+  done
+fi
+
 python3 -c '
 import json, sys
 path = sys.argv[1]
