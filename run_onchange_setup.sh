@@ -358,30 +358,24 @@ if ! command -v eza >/dev/null; then
   fi
 fi
 
-if ! command -v espanso >/dev/null; then
-  if is_macos; then
-    brew_install espanso
-  else
-    tmp="$(mktemp -d)"
-    wget -O "$tmp/espanso.deb" "https://github.com/espanso/espanso/releases/latest/download/espanso-debian-x11-amd64.deb"
-    sudo apt install -y "$tmp/espanso.deb" </dev/tty
-    rm -rf "$tmp"
-    espanso service register
-  fi
-fi
-
-# Symlink espanso config on macOS so chezmoi-managed ~/.config/espanso is used
-if is_macos; then
-  mkdir -p "$HOME/.config/espanso"
-  if [ ! -L "$HOME/Library/Application Support/espanso" ]; then
-    rm -rf "$HOME/Library/Application Support/espanso"
-    ln -s "$HOME/.config/espanso" "$HOME/Library/Application Support/espanso"
-  fi
-fi
-
-# Install espanso shruggie package
-if command -v espanso >/dev/null && [ ! -d "$(espanso path packages 2>/dev/null)/shruggie" ]; then
-  espanso install shruggie --force
+if command -v espanso >/dev/null; then
+  espanso_uninstall=""
+  read -r -p "Espanso is installed. Uninstall it? [y/N] " espanso_uninstall </dev/tty || true
+  case "$espanso_uninstall" in
+    y|Y|yes|YES|Yes)
+      if is_macos; then
+        brew uninstall espanso
+        if [ -L "$HOME/Library/Application Support/espanso" ]; then
+          rm "$HOME/Library/Application Support/espanso"
+        fi
+      else
+        sudo apt remove -y espanso </dev/tty
+      fi
+      ;;
+    *)
+      echo "Keeping Espanso installed."
+      ;;
+  esac
 fi
 
 # Install oh-my-zsh

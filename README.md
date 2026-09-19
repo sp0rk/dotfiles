@@ -30,7 +30,6 @@ On macOS, packages are installed with Homebrew where available. Lite XL is insta
 - Apps
   - **kitty** — Terminal emulator.
   - **Lite XL** — Text editor.
-  - **espanso** — OS-wide text expander.
 
 ## Zsh Plugins
 
