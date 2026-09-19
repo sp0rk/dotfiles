@@ -1,0 +1,16 @@
+#!/bin/bash
+
+set -e
+
+if [ "$(uname)" != "Linux" ]; then
+  exit 0
+fi
+
+enabled="$(chezmoi execute-template '{{ get . "desktopSync" | default false }}')"
+if [ "$enabled" != "true" ]; then
+  exit 0
+fi
+
+source_dir="$(chezmoi source-path)"
+bash "$source_dir/.chezmoitemplates/desktop-state/capture.sh" --yes
+git -C "$source_dir" add .chezmoitemplates/desktop-state

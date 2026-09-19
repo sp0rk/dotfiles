@@ -1,0 +1,42 @@
+{
+    "aaa5593f-4d6f-4759-9cb7-279012752eef": {
+        "id": "aaa5593f-4d6f-4759-9cb7-279012752eef",
+        "name": "Google Search",
+        "keyword": "g",
+        "cmd": "https://google.com/search?q=%s",
+        "icon": "/usr/share/ulauncher/media/google-search-icon.png",
+        "is_default_search": true,
+        "run_without_argument": false,
+        "added": 1777449614.8641436
+    },
+    "6e647f17-0ce8-4a37-a809-fecfada4908d": {
+        "id": "6e647f17-0ce8-4a37-a809-fecfada4908d",
+        "name": "Chrome",
+        "keyword": "c",
+        "cmd": "google-chrome",
+        "icon": "/usr/share/icons/hicolor/256x256/apps/google-chrome.png",
+        "is_default_search": false,
+        "run_without_argument": true,
+        "added": 1777465952.5574696
+    },
+    "81cb0ccd-6df3-4be8-bc17-f0c92120d8bb": {
+        "id": "81cb0ccd-6df3-4be8-bc17-f0c92120d8bb",
+        "name": "Codex",
+        "keyword": "codex",
+        "cmd": "kitty -- zsh -ic 'codex; exec zsh'",
+        "icon": "~/.codex/icon.jpg",
+        "is_default_search": false,
+        "run_without_argument": true,
+        "added": 1777466337.7834148
+    },
+    "66334f31-8088-4974-959f-4446586fc9df": {
+        "id": "66334f31-8088-4974-959f-4446586fc9df",
+        "name": "TM2020",
+        "keyword": "t",
+        "cmd": "wine \"C:\\\\Program Files (x86)\\\\Ubisoft\\\\Ubisoft Game Launcher\\\\upc.exe\" uplay://launch/5595/0",
+        "icon": "~/Pictures/trackmania.ico",
+        "is_default_search": false,
+        "run_without_argument": true,
+        "added": 1777833005.0442896
+    }
+}

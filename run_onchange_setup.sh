@@ -414,6 +414,7 @@ sync_lite_xl_plugins
 
 # Install git hooks
 CHEZMOI_SRC="$HOME/.local/share/chezmoi"
+ln -sf "$CHEZMOI_SRC/hooks/pre-commit" "$CHEZMOI_SRC/.git/hooks/pre-commit"
 ln -sf "$CHEZMOI_SRC/hooks/pre-push" "$CHEZMOI_SRC/.git/hooks/pre-push"
 
 # Set default shell to zsh
@@ -427,8 +428,3 @@ fi
 
 # Set editors
 git config --global core.editor "lite-xl"
-mkdir -p "$HOME/.config/chezmoi"
-cat > "$HOME/.config/chezmoi/chezmoi.toml" <<'EOF'
-[edit]
-    command = "lite-xl"
-EOF

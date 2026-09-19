@@ -1,0 +1,9 @@
+{{- $desktopSync := false -}}
+{{- if eq .chezmoi.os "linux" -}}
+{{-   $desktopSync = promptBoolOnce . "desktopSync" "Sync Linux Mint desktop configuration" false -}}
+{{- end }}
+[edit]
+    command = "lite-xl"
+
+[data]
+    desktopSync = {{ $desktopSync }}

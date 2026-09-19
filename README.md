@@ -83,9 +83,32 @@ Following files are created empty by chezmoi and never overwritten. Edit them di
 Put shell-style assignments in `~/.config/zsh/secrets.local`, for example `FOO_API_KEY=bar`.
 They are exported automatically so commands launched from zsh can read them from the environment.
 
+## Optional Linux desktop state
+
+On Linux, `chezmoi init` asks whether to sync Linux Mint desktop configuration. The
+default is **No**. The prompt is skipped on macOS, and the restore script renders
+to an empty no-op there.
+
+When enabled, `chezmoi apply` restores captured Cinnamon and Plank dconf settings,
+Ulauncher configuration and themes, Plank launchers, Cinnamon spice settings, and
+missing Cinnamon desklets. A Linux-only pre-commit hook captures and stages the
+current desktop state automatically. To capture without committing, run:
+
+```sh
+bash "$(chezmoi source-path)/.chezmoitemplates/desktop-state/capture.sh"
+chezmoi diff
+```
+
+Review captured files for private data before committing. The capture excludes
+Ulauncher extension databases, caches, monitor layouts, and application runtime
+state. Cinnamon, Plank, or Ulauncher may need restarting after restoration.
+
 ## Git hooks
 
-A `pre-push` hook checks `chezmoi diff` before pushing. If there are unapplied changes, it prompts to apply, force push, or abort. The hook is symlinked from `hooks/pre-push` by `run_onchange_setup.sh`.
+A Linux-only `pre-commit` hook captures and stages opted-in desktop state. A
+`pre-push` hook checks `chezmoi diff` before pushing; if there are unapplied
+changes, it prompts to apply, force push, or abort. Both hooks are symlinked from
+`hooks/` by `run_onchange_setup.sh`.
 
 ## Preview
 

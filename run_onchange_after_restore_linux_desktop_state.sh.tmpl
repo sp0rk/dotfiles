@@ -1,0 +1,70 @@
+{{- $desktopSync := get . "desktopSync" | default false -}}
+{{- if and (eq .chezmoi.os "linux") $desktopSync -}}
+#!/bin/bash
+
+set -e
+
+# Captured-state checksum; changing it causes chezmoi to rerun this script.
+# {{ include ".chezmoitemplates/desktop-state/manifest.sha256" | sha256sum }}
+
+state_dir={{ .chezmoi.sourceDir | quote }}/.chezmoitemplates/desktop-state
+
+copy_tree() {
+  local source=$1
+  local target=$2
+
+  if [ ! -d "$source" ]; then
+    return 0
+  fi
+  mkdir -p "$target"
+  cp -a "$source/." "$target/"
+}
+
+copy_tree "$state_dir/config/ulauncher" "$HOME/.config/ulauncher"
+copy_tree "$state_dir/config/plank-launchers" "$HOME/.config/plank/dock1/launchers"
+copy_tree "$state_dir/config/cinnamon-spices" "$HOME/.config/cinnamon/spices"
+
+if command -v dconf >/dev/null && [ -n "${DBUS_SESSION_BUS_ADDRESS:-}" ]; then
+  if [ -s "$state_dir/dconf/cinnamon.ini" ]; then
+    dconf load /org/cinnamon/ < "$state_dir/dconf/cinnamon.ini"
+  fi
+  if [ -s "$state_dir/dconf/plank.ini" ]; then
+    dconf load /net/launchpad/plank/ < "$state_dir/dconf/plank.ini"
+  fi
+else
+  echo "Desktop state: skipping dconf restore outside a graphical session." >&2
+fi
+
+desklet_list="$state_dir/desklets/installed.txt"
+desklet_target="$HOME/.local/share/cinnamon/desklets"
+if [ -s "$desklet_list" ] && command -v curl >/dev/null; then
+  missing=false
+  while IFS= read -r desklet; do
+    if [ -n "$desklet" ] && [ ! -d "$desklet_target/$desklet" ]; then
+      missing=true
+      break
+    fi
+  done < "$desklet_list"
+
+  if $missing; then
+    tmp="$(mktemp -d)"
+    archive="$tmp/desklets.tar.gz"
+    if curl -fsSL \
+      https://github.com/linuxmint/cinnamon-spices-desklets/archive/refs/heads/master.tar.gz \
+      -o "$archive" && tar -xzf "$archive" -C "$tmp"; then
+      mkdir -p "$desklet_target"
+      while IFS= read -r desklet; do
+        source="$tmp/cinnamon-spices-desklets-master/$desklet"
+        if [ -n "$desklet" ] && [ ! -d "$desklet_target/$desklet" ] && [ -d "$source" ]; then
+          cp -a "$source" "$desklet_target/"
+        fi
+      done < "$desklet_list"
+    else
+      echo "Desktop state: unable to download missing Cinnamon desklets." >&2
+    fi
+    rm -rf "$tmp"
+  fi
+fi
+
+echo "Restored opt-in Linux desktop state. Restart Cinnamon, Plank, and Ulauncher as needed."
+{{- end -}}
