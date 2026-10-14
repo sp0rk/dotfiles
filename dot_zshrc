@@ -48,6 +48,24 @@ eval "$(zoxide init zsh --cmd cd)"
 # Pass unmatched globs as literals (e.g. parentheses in branch names)
 setopt NO_NOMATCH
 
+# Serial-number shortcuts (~/.sn.zsh is a chezmoi symlink into the source dir).
+# Exports each NAME=value line so you can do e.g. `installed $F4`.
+_load_sn() {
+  local f=~/.sn.zsh line name value
+  [[ -r "$f" ]] || return 0
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    line="${line#"${line%%[![:space:]]*}"}"   # strip leading whitespace
+    line="${line#export }"
+    [[ "$line" == \#* || -z "$line" ]] && continue
+    [[ "$line" == [A-Za-z_][A-Za-z0-9_]*=* ]] || continue
+    name="${line%%=*}"
+    value="${line#*=}"
+    export "$name=$value"
+  done < "$f"
+}
+snreload() { _load_sn; }   # re-read ~/.sn.zsh after editing
+_load_sn
+
 # Aliases
 source ~/.zsh_aliases
 

@@ -2,6 +2,7 @@ README.md
 assets
 AGENTS.md
 hooks
+sn_values.zsh
 
 {{ if ne (index .chezmoi.osRelease "id") "linuxmint" }}
 private_dot_config/input-remapper-2
