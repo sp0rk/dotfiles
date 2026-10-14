@@ -25,17 +25,39 @@ alias chezmoilx="cd ~/.local/share/chezmoi && lx ."
 alias chezmoip="chezmoi update"
 
 # Scrcpy
-alias record="scrcpy --show-touches --select-usb --no-audio --record=file.mp4"
-alias mirror="scrcpy --show-touches --select-usb --no-audio"
+# Optional device serial as the first argument; omit to use the only connected device.
+# scrcpy with optional device serial as the first argument.
+# zsh does not word-split unquoted expansions, so build the flag as an array.
+_scrcpy() { local d=(); [[ -n "$1" ]] && { d=(-s "$1"); shift; }; scrcpy "${d[@]}" "$@"; }
+record() { _scrcpy "$1" --show-touches --select-usb --no-audio --record=file.mp4; }
+mirror() { _scrcpy "$1" --show-touches --select-usb --no-audio; }
 
 # Adb
-alias back="adb shell input keyevent 4"
-alias home="adb shell input keyevent 3"
-alias recents="adb shell input keyevent KEYCODE_APP_SWITCH"
-alias ip="adb shell ip addr show wlan0 | grep -e wlan0$ | cut -d ' ' -f 6 | cut -d/ -f 1"
-alias wm="adb shell wm size && adb shell wm density"
-alias wifi="adb shell am start -a android.settings.WIRELESS_SETTINGS"
-alias launch="adb shell monkey -c android.intent.category.LAUNCHER 1 -p"
+# Each function takes an optional device serial as the first argument.
+# With no argument adb targets the only connected device; pass a serial to pick one.
+# _adb <serial-or-empty> <adb-args...>  — serial first, "" if none.
+_adb() { local d=(); [[ -n "$1" ]] && d=(-s "$1"); shift; adb "${d[@]}" "$@"; }
+back() { _adb "$1" shell input keyevent 4; }
+home() { _adb "$1" shell input keyevent 3; }
+recents() { _adb "$1" shell input keyevent KEYCODE_APP_SWITCH; }
+ip() { _adb "$1" shell ip addr show wlan0 | grep -e wlan0$ | cut -d ' ' -f 6 | cut -d/ -f 1; }
+wm() { _adb "$1" shell wm size && _adb "$1" shell wm density; }
+wifi() { _adb "$1" shell am start -a android.settings.WIRELESS_SETTINGS; }
+# launch <package> [serial]  — package first, optional serial second
+launch() {
+  [[ -z "$1" ]] && { echo "usage: launch <package> [serial]"; return 1; }
+  _adb "$2" shell monkey -c android.intent.category.LAUNCHER 1 -p "$1";
+}
+installed() { _adb "$1" shell cmd package list packages | sed "s/package://" | grep -E "loomis|teller"; }
+uninstall() { installed "$1" | while read -r line; do _adb "$1" uninstall "$line"; done; }
+close() { installed "$1" | while read -r line; do _adb "$1" shell am force-stop "$line"; done; }
+seita() { _adb "$1" shell am force-stop fi.seita.infinipay; }
+devmode() { _adb "$1" shell am start -n com.loomispay.teller.debug/com.loomispay.teller.devmode.internal.DevModeActivity; }
+alias debug=devmode
+alias config=devmode
+launchDebug() { _adb "$1" shell monkey -c android.intent.category.LAUNCHER 1 -p com.loomispay.teller.debug; }
+launchStage() { _adb "$1" shell monkey -c android.intent.category.LAUNCHER 1 -p com.loomispay.teller.stage; }
+launchProd() { _adb "$1" shell monkey -c android.intent.category.LAUNCHER 1 -p com.loomispay.teller; }
 
 # Reveal-md
 alias present="open http://localhost:1948 && docker run --rm -p 1948:1948 -p 35729:35729 -v ~/pres:/slides webpronl/reveal-md:6.1.0 /slides --watch --css style.css --css plugin/chalkboard/style.css --css plugin/customcontrols/style.css"
